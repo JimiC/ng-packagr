@@ -16,6 +16,8 @@ export class NgPackageData {
   public readonly buildDirectory: string;
   public readonly libExternals: any;
   public readonly jsxConfig?: string;
+  public readonly exclude: string[];
+
 
   constructor(
     /**
@@ -55,6 +57,7 @@ export class NgPackageData {
       this.flatModuleFileName = ngPackageConfig.lib.flatModuleFile;
       this.entryFile = ngPackageConfig.lib.entryFile;
       this.jsxConfig = ngPackageConfig.lib.jsx;
+      this.exclude = ngPackageConfig.lib.exclude;
     }
 
     if (!this.libExternals) {
@@ -65,6 +68,9 @@ export class NgPackageData {
     }
     if (!this.entryFile) {
       this.entryFile = 'public_api.ts';
+    }
+    if (!this.exclude) {
+      this.exclude = [];
     }
 
     // Each entry point gets it's own unique build directory based upon the package name.

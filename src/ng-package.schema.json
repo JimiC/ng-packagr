@@ -47,6 +47,14 @@
           "type": "string",
           "enum": ["preserve", "react", "react-native"],
           "default": ""
+        },
+        "exclude": {
+          "description": "The files and folders to be excluded from builded artifacts.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
         }
       }
     }

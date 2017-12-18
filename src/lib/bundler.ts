@@ -30,7 +30,7 @@ export async function generateNgBundle(ngPkg: NgPackageData): Promise<void> {
 
   // 1. ASSETS
   log.info('Processing assets');
-  await processAssets(ngPkg.sourcePath, baseBuildPath);
+  await processAssets(ngPkg, baseBuildPath);
 
   // 2. NGC
   log.info('Running ngc');

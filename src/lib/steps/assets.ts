@@ -2,6 +2,7 @@ import * as vfs from 'vinyl-fs';
 import * as path from 'path';
 import { debug, warn } from '../util/log';
 import { readFile } from 'fs-extra';
+import { hasMagic } from 'glob';
 
 // Angular Inliner for Templates and Stylesheets
 import * as inlineNg2Template from 'gulp-inline-ng2-template';
@@ -14,6 +15,7 @@ import * as sass from 'node-sass';
 import * as less from 'less';
 import * as stylus from 'stylus';
 
+import { NgPackageData } from '../model/ng-package-data';
 
 /**
  * Process Angular components assets (HTML and Stylesheets).
@@ -21,15 +23,20 @@ import * as stylus from 'stylus';
  * Inlines 'templateUrl' and 'styleUrl', compiles .scss to .css, and write .ts files to
  * destination directory.
  *
- * @param src Source folder
+ * @param ngPkg Parent Angular package
  * @param dest Destination folder
  */
-export const processAssets = (src: string, dest: string): Promise<any> => {
+export const processAssets = (ngPkg: NgPackageData, dest: string): Promise<any> => {
 
   return new Promise((resolve, reject) => {
+    const src = ngPkg.sourcePath;
+    const globalize = (path: string): string => hasMagic(path) ? path : `${path}/**/*`;
+    const included = [`${src}/**/*.ts`, `${src}/**/*.tsx`, `${src}/**/*.jsx`];
+    const excluded = ['!node_modules/**/*', `!${dest}/**/*`, ...ngPkg.exclude.map(excl => `!${globalize(excl)}`)];
+
     debug(`processAssets ${src} to ${dest}`);
 
-    vfs.src([`${src}/**/*.ts`, `${src}/**/*.tsx`, `${src}/**/*.jsx`, '!node_modules/**/*', '!${dest}/**/*'])
+    vfs.src([...included, ...excluded])
       .pipe(inlineNg2Template({
         base: `${src}`,
         useRelativePaths: true,
@@ -43,7 +50,7 @@ export const processAssets = (src: string, dest: string): Promise<any> => {
 
           try {
             const css: string = await renderPickTask;
-            const result: postcss.Result = await postcss([ autoprefixer({ browsers }) ])
+            const result: postcss.Result = await postcss([autoprefixer({ browsers })])
               .process(css, { from: path, to: path.replace(ext, '.css') });
             result.warnings().forEach((msg) => {
               warn(msg.toString());
@@ -120,7 +127,7 @@ const renderLess = (lessOpts: any): Promise<string> => {
   return readFile(lessOpts.filename)
     .then(buffer => buffer.toString())
     .then((lessData: string) => new Promise<string>((resolve, reject) => {
-        less.render(lessData || '', lessOpts, (err, result) => {
+      less.render(lessData || '', lessOpts, (err, result) => {
         if (err) {
           reject(err);
         } else {
@@ -155,5 +162,5 @@ const renderStylus = ({ filename, root }): Promise<string> => {
             resolve(css);
           }
         });
-      }));
+    }));
 }
